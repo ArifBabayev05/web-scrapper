@@ -3,20 +3,21 @@
 ## ⚠️ ÖNƏMLİ QEYD
 
 Puppeteer serverless platformlarda (Vercel, Netlify) **IŞLƏMƏZ** çünki Chrome binary tələb edir. 
-Aşağıdakı platformlardan birini seçin:
+Bu API **Render.com** üçün optimallaşdırılıb.
 
 ---
 
-## 🎯 Tövsiyə Olunan Platform: Railway.app
+## 🎯 Tövsiyə Olunan Platform: Render.com
 
-### Niyə Railway?
-- ✅ Pulsuz tier (500 saat/ay)
-- ✅ Puppeteer dəstəyi
-- ✅ Asan deployment
-- ✅ Avtomatik HTTPS
-- ✅ Environment variables
+### Niyə Render?
+- ✅ **Pulsuz tier** (750 saat/ay)
+- ✅ **Puppeteer dəstəyi** (Native Chrome)
+- ✅ **Asan deployment** (GitHub integration)
+- ✅ **Avtomatik HTTPS**
+- ✅ **Auto-deploy** (Git push = auto deploy)
+- ✅ **Persistent disk** (Session saxlanması)
 
-### Railway Deployment Addımları:
+### Render Deployment Addımları:
 
 1. **GitHub Repository Yaradın**
    ```bash
@@ -29,66 +30,44 @@ Aşağıdakı platformlardan birini seçin:
    git push -u origin main
    ```
 
-2. **Railway.app-a Qeydiyyat**
-   - [railway.app](https://railway.app) saytına daxil olun
-   - GitHub ilə giriş edin
-
-3. **Yeni Proyekt Yaradın**
-   - "New Project" → "Deploy from GitHub repo"
-   - `e-social-bot-api` repository-ni seçin
-   - Railway avtomatik detect edəcək və deploy edəcək
-
-4. **Environment Variables (Lazım deyil, amma istəsəniz)**
-   - Settings → Variables
-   - `PORT` əlavə etməyə ehtiyac yoxdur (Railway avtomatik təyin edir)
-
-5. **Domain Əldə Edin**
-   - Settings → Networking → Generate Domain
-   - Nümunə: `https://e-social-bot-api-production.up.railway.app`
-
----
-
-## 🔄 Alternativ: Render.com
-
-### Render Deployment:
-
-1. **GitHub-a Push Edin** (yuxarıdakı kimi)
-
 2. **Render.com-a Qeydiyyat**
    - [render.com](https://render.com) saytına daxil olun
+   - "Get Started" düyməsinə basın
    - GitHub ilə giriş edin
 
 3. **Yeni Web Service Yaradın**
-   - "New" → "Web Service"
-   - Repository seçin: `e-social-bot-api`
-   - Settings:
-     - **Name**: e-social-bot-api
-     - **Environment**: Node
-     - **Build Command**: `npm install`
-     - **Start Command**: `node server.js`
-     - **Plan**: Free
+   - Dashboard-da "New +" → "Web Service"
+   - GitHub repository-ni connect edin
+   - `e-social-bot-api` repository-ni seçin
 
-4. **Deploy Edin**
+4. **Deployment Settings**
+   - **Name**: `e-social-bot-api`
+   - **Environment**: `Node`
+   - **Region**: `Frankfurt (EU Central)` (Azərbaycana ən yaxın)
+   - **Branch**: `main`
+   - **Build Command**: `npm install`
+   - **Start Command**: `node server.js`
+   - **Instance Type**: `Free`
+
+5. **Advanced Settings (Optional)**
+   - Environment Variables: Lazım deyil
+   - Auto-Deploy: `Yes` (default)
+
+6. **Deploy Edin**
    - "Create Web Service" düyməsinə basın
-   - 5-10 dəqiqə gözləyin
-   - Domain: `https://e-social-bot-api.onrender.com`
+   - İlk deployment 5-10 dəqiqə çəkir (Puppeteer install edir)
+   - Logs-da "Server running" görünənə qədər gözləyin
+
+7. **Domain Əldə Edin**
+   - Deployment bitdikdən sonra URL avtomatik yaranır
+   - Nümunə: `https://e-social-bot-api.onrender.com`
+   - Settings-dən custom domain əlavə edə bilərsiniz
 
 ---
 
 ## 🧪 Deployed API Test Komandaları
 
-### Railway URL ilə (Nümunə)
-```bash
-# Health Check
-curl https://e-social-bot-api-production.up.railway.app/api/health
-
-# Scrape Data
-curl -X POST https://e-social-bot-api-production.up.railway.app/api/scrape \
-  -H "Content-Type: application/json" \
-  -d "{\"fin\":\"7EMHZ9L\",\"sv\":\"AA3748461\"}"
-```
-
-### Render URL ilə (Nümunə)
+### Render URL ilə
 ```bash
 # Health Check
 curl https://e-social-bot-api.onrender.com/api/health
@@ -99,31 +78,29 @@ curl -X POST https://e-social-bot-api.onrender.com/api/scrape \
   -d "{\"fin\":\"7EMHZ9L\",\"sv\":\"AA3748461\"}"
 ```
 
+### PowerShell (Windows)
+```powershell
+# Health Check
+Invoke-RestMethod -Uri "https://e-social-bot-api.onrender.com/api/health"
+
+# Scrape Data
+$body = @{ fin = "7EMHZ9L"; sv = "AA3748461" } | ConvertTo-Json
+Invoke-RestMethod -Uri "https://e-social-bot-api.onrender.com/api/scrape" `
+  -Method POST -Body $body -ContentType "application/json"
+```
+
 ---
 
 ## 🔧 PowerShell Test Script (Windows)
 
-Deploy edildikdən sonra, `test-deployed-api.ps1` faylını yaradın:
+Deploy edildikdən sonra, `test-deployed-api.ps1` faylını işlədin:
 
 ```powershell
-# Deployed API URL-ni dəyişdirin
-$API_URL = "https://e-social-bot-api-production.up.railway.app"
+# Faylı redaktə edin və API URL-i dəyişdirin
+$API_URL = "https://e-social-bot-api.onrender.com"
 
-# Health Check
-Write-Host "`n=== Health Check ===" -ForegroundColor Cyan
-curl "$API_URL/api/health"
-
-# Scrape Data
-Write-Host "`n`n=== Scrape Data ===" -ForegroundColor Cyan
-$body = @{
-    fin = "7EMHZ9L"
-    sv = "AA3748461"
-} | ConvertTo-Json
-
-curl -Method POST `
-  -Uri "$API_URL/api/scrape" `
-  -ContentType "application/json" `
-  -Body $body
+# Scripti işə salın
+.\test-deployed-api.ps1
 ```
 
 ---
@@ -132,7 +109,7 @@ curl -Method POST `
 
 ### JavaScript/Node.js
 ```javascript
-const response = await fetch('https://YOUR-API-URL/api/scrape', {
+const response = await fetch('https://e-social-bot-api.onrender.com/api/scrape', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ fin: '7EMHZ9L', sv: 'AA3748461' })

@@ -12,6 +12,19 @@ app.use(express.json());
 // Global variable to track if a launch is already in progress
 let isLaunching = false;
 
+// Root endpoint
+app.get('/', (req, res) => {
+    res.json({
+        name: 'E-Social Bot API',
+        version: '1.0.0',
+        status: 'running',
+        endpoints: {
+            health: '/api/health',
+            scrape: '/api/scrape (POST)'
+        }
+    });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'E-Social Bot API is running' });
@@ -54,15 +67,13 @@ app.post('/api/scrape', async (req, res) => {
             isLaunching = true;
             try {
                 browser = await puppeteer.launch({
-                    headless: false,
-                    defaultViewport: null,
+                    headless: 'new', // Changed to headless for production
                     args: [
-                        '--start-maximized',
                         '--no-sandbox',
                         '--disable-setuid-sandbox',
-                        '--remote-debugging-port=9222'
-                    ],
-                    userDataDir: './user_data_legal_bot'
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu'
+                    ]
                 });
                 console.log("Launched new Chrome instance");
             } catch (launchError) {

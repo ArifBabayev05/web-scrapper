@@ -1,6 +1,17 @@
 # E-Social Bot API
 
-Web scraping API for e-social.gov.az portal
+🤖 Web scraping API for e-social.gov.az portal - Extract employee data using FIN and SV numbers
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+
+## 📋 Table of Contents
+
+- [Installation](#-installation)
+- [Running Locally](#-running-locally)
+- [Deployment](#-deployment)
+- [API Endpoints](#-api-endpoints)
+- [Testing](#-testing)
+- [Usage in Other Projects](#-usage-in-other-projects)
 
 ## 🚀 Installation
 
@@ -17,6 +28,29 @@ npm run dev
 # Production mode
 npm start
 ```
+
+## 🌐 Deployment
+
+**⚠️ IMPORTANT**: Puppeteer does NOT work on serverless platforms (Vercel, Netlify). Use:
+- **Render.com** (Recommended - Free tier available)
+- **VPS/Dedicated Server**
+
+### Quick Deploy to Render:
+
+1. Push to GitHub
+2. Go to [render.com](https://render.com)
+3. "New +" → "Web Service"
+4. Connect GitHub and select your repository
+5. Settings:
+   - **Environment**: Node
+   - **Build Command**: `npm install`
+   - **Start Command**: `node server.js`
+   - **Region**: Frankfurt (EU Central)
+6. Click "Create Web Service"
+7. Wait 5-10 minutes for deployment
+8. Get your API URL (e.g., `https://e-social-bot-api.onrender.com`)
+
+📖 **Full deployment guide**: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ## 📡 API Endpoints
 
