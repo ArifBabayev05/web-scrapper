@@ -346,7 +346,8 @@ app.post('/api/scrape', async (req, res) => {
         if (browser) await browser.close();
         console.error("Scraping error:", error);
         return res.status(500).json({
-            error: "Sistem xətası: " + error.message
+            error: "Sistem xətası: " + error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
