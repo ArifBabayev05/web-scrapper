@@ -1,13 +1,20 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
+const functions = require('firebase-functions'); // New for Firebase
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: true })); // Updated for Firebase compatibility
 app.use(express.json());
+
+// Path logging for debugging deployment issues
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
 
 // Global variable to track if a launch is already in progress
 let isLaunching = false;
@@ -55,37 +62,43 @@ app.post('/api/scrape', async (req, res) => {
             sv = sv.toUpperCase().replace("AZE", "").trim();
         }
 
-        // 1. Try to connect to an existing Chrome instance first
-        try {
-            browser = await puppeteer.connect({
-                browserURL: 'http://127.0.0.1:9222',
-                defaultViewport: null
-            });
-            console.log("Connected to existing Chrome instance");
-        } catch (e) {
-            // 2. If not found, launch a new one
-            isLaunching = true;
+        // Browser launch logic
+        const remoteBrowserUrl = process.env.BROWSER_WS_ENDPOINT; // e.g., wss://chrome.browserless.io/...
+
+        if (remoteBrowserUrl) {
+            console.log("Connecting to remote browser...");
+            browser = await puppeteer.connect({ browserWSEndpoint: remoteBrowserUrl });
+        } else {
+            // Development/Local launch logic
             try {
-                browser = await puppeteer.launch({
-                    headless: 'new', // Changed to headless for production
-                    args: [
-                        '--no-sandbox',
-                        '--disable-setuid-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-gpu'
-                    ]
+                // Try to connect to existing local Chrome first
+                browser = await puppeteer.connect({
+                    browserURL: 'http://127.0.0.1:9222',
+                    defaultViewport: null
                 });
-                console.log("Launched new Chrome instance");
-            } catch (launchError) {
-                isLaunching = false;
-                if (launchError.message.includes('already running')) {
-                    return res.status(500).json({
-                        error: "Brauzer artıq açıqdır. Zəhmət olmasa digər bot pəncərəsini bağlayın."
+                console.log("Connected to existing local Chrome");
+            } catch (e) {
+                isLaunching = true;
+                try {
+                    // Launch new instance with optimized flags for different environments
+                    browser = await puppeteer.launch({
+                        headless: process.env.NODE_ENV === 'production' ? 'new' : false,
+                        args: [
+                            '--no-sandbox',
+                            '--disable-setuid-sandbox',
+                            '--disable-dev-shm-usage',
+                            '--disable-gpu',
+                            '--no-zygote',
+                            '--no-first-run'
+                        ]
                     });
+                    console.log("Launched new local Chrome instance");
+                } catch (launchError) {
+                    isLaunching = false;
+                    throw new Error("Brauzer başlatmaq mümkün olmadı: " + launchError.message);
+                } finally {
+                    isLaunching = false;
                 }
-                throw launchError;
-            } finally {
-                isLaunching = false;
             }
         }
 
@@ -338,11 +351,16 @@ app.post('/api/scrape', async (req, res) => {
     }
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`🚀 E-Social Bot API running on port ${PORT}`);
-    console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
-    console.log(`📍 Scrape endpoint: http://localhost:${PORT}/api/scrape`);
-});
+// Export for Firebase Functions
+exports.api = functions.https.onRequest(app);
+
+// Start server locally only if not running in a functions environment
+if (process.env.NODE_ENV !== 'production' || !process.env.FUNCTION_SIGNATURE_TYPE) {
+    app.listen(PORT, () => {
+        console.log(`🚀 E-Social Bot API running on port ${PORT}`);
+        console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
+        console.log(`📍 Scrape endpoint: http://localhost:${PORT}/api/scrape`);
+    });
+}
 
 module.exports = app;
